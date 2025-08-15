@@ -35,7 +35,6 @@ def generate_main_tex():
     
     # Add document class and preamble
     main_tex_content.append(r"\documentclass{report}")
-    main_tex_content.append(r"\usepackage{xcolor}") # Example of a package that could be in a preamble
     main_tex_content.append(r"\input{preamble.tex}")
     main_tex_content.append(r"")
 
