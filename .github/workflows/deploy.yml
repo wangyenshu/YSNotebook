@@ -1,4 +1,5 @@
 name: Build and Deploy
+
 on:
   push:
     branches:
@@ -27,22 +28,34 @@ jobs:
         with:
           os: debian
           run: |
-            # Install required LaTeX packages via tlmgr
-            tlmgr install latexmk collection-fontsrecommended
-
+            # Install required LaTeX packages
+            tlmgr install latexmk collection-fontsrecommended \
+              amsmath geometry hyperref xcolor graphics fancyhdr \
+              titlesec booktabs siunitx
             # Compile LaTeX document
             latexmk -pdf main.tex
 
-      - name: Convert PDF to HTML with Docker
+      - name: Check if PDF was created
         run: |
-          # Create the output directory and give it correct permissions
+          ls -l
+          if [ ! -f main.pdf ]; then
+            echo "❌ main.pdf not found after LaTeX compile"
+            exit 1
+          fi
+
+      - name: Prepare output directory
+        run: |
           mkdir -p out
-          chmod 777 out
           cp main.pdf out/main.pdf
 
-          # Run the pdf2htmlEX container to perform the conversion
-          # docker run pdf2htmlex/pdf2htmlex:0.18.8.rc2-master-20200820-alpine-3.12.0-x86_64 pdf2htmlEX --dest-dir /out --embed cfijo main.pdf
-          docker run --rm -v ~/out:/out -w /out pdf2htmlex/pdf2htmlex:0.18.8.rc2-master-20200820-alpine-3.12.0-x86_64 --dest-dir /out --embed cfijo main.pdf
+      - name: Convert PDF to HTML with Docker
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/out:/out" \
+            -w /out \
+            pdf2htmlex/pdf2htmlex:0.18.8.rc2-master-20200820-alpine-3.12.0-x86_64 \
+            --dest-dir /out --embed cfijo main.pdf
+
       - name: Rename HTML file
         run: mv out/main.html out/index.html
 
