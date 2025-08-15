@@ -1,3 +1,6 @@
+- Compiled pdf file can be found at https://github.com/wangyenshu/YSNotebook/blob/pdf/main.tex.
+- html version can be found at https://wangyenshu.github.io/YSNotebook/.
+
 # TODO
 - chapter1-Dessin
 - chapter2-GT
