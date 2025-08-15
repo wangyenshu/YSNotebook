@@ -53,7 +53,7 @@ def generate_main_tex():
     for _, chapter_folder in chapters:
         # Assuming the chapter file inside is named the same as the folder, but with a .tex extension
         chapter_file_path = f"{chapter_folder}/main.tex"
-        main_tex_content.append(f"\\subfiles{{{chapter_file_path}}}")
+        main_tex_content.append(f"\\subfile{{{chapter_file_path}}}")
 
     main_tex_content.append(r"")
     main_tex_content.append(r"\end{document}")
