@@ -1,0 +1,84 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Python script to generate main.tex
+        run: python genMain.py
+
+      - name: Install PDFtoHTMLEX dependencies and the .deb package
+        run: |
+          # Install dependencies required by pdf2htmlEX
+          sudo apt-get update
+          sudo apt-get install -y \
+            fontforge \
+            ttf-mscorefonts-installer \
+            ttf-thai-tlwg \
+            ttf-aenigma \
+            ttf-bitstream-vera \
+            ttf-dejavu \
+            ttf-gentium \
+            ttf-liberation \
+            ttf-linux-libertine \
+            ttf-ubuntu-font-family \
+            ttf-anonymous-pro \
+            ttf-ancient-scripts
+
+          # Download and install pdf2htmlEX from the .deb package
+          wget https://github.com/pdf2htmlEX/pdf2htmlEX/releases/download/v0.18.8.rc1/pdf2htmlEX-0.18.8.rc1-master-20200630-Ubuntu-bionic-x86_64.deb
+          sudo dpkg -i pdf2htmlEX-0.18.8.rc1-master-20200630-Ubuntu-bionic-x86_64.deb || sudo apt-get install -f
+
+      - name: Set up TeX Live
+        uses: xu-cheng/texlive-action@v1
+        with:
+          packages: >
+            latexmk
+            collection-fontsrecommended
+
+      - name: Compile LaTeX document
+        run: latexmk -pdf main.tex
+
+      - name: Convert PDF to HTML
+        run: pdf2htmlEX --embed cfijo --dest-dir out main.pdf
+
+      - name: Rename HTML file
+        run: mv out/main.html out/index.html
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: out
+          destination_dir: .
+          force_orphan: true
+          cname: ''
+
+      - name: Deploy to pdf branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          destination_dir: .
+          keep_files: false
+          force_orphan: true
+          commit_message: 'Deploy main.pdf'
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          publish_branch: pdf
+          exclude_assets: out/
