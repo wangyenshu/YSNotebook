@@ -22,41 +22,27 @@ jobs:
       - name: Run Python script to generate main.tex
         run: python genMain.py
 
-      - name: Install PDFtoHTMLEX dependencies and the .deb package
-        run: |
-          # Install dependencies required by pdf2htmlEX
-          sudo apt-get update
-          sudo apt-get install -y \
-            fontforge \
-            ttf-mscorefonts-installer \
-            ttf-thai-tlwg \
-            ttf-aenigma \
-            ttf-bitstream-vera \
-            ttf-dejavu \
-            ttf-gentium \
-            ttf-liberation \
-            ttf-linux-libertine \
-            ttf-ubuntu-font-family \
-            ttf-anonymous-pro \
-            ttf-ancient-scripts
-
-          # Download and install pdf2htmlEX from the .deb package
-          wget https://github.com/pdf2htmlEX/pdf2htmlEX/releases/download/v0.18.8.rc1/pdf2htmlEX-0.18.8.rc1-master-20200630-Ubuntu-bionic-x86_64.deb
-          sudo dpkg -i pdf2htmlEX-0.18.8.rc1-master-20200630-Ubuntu-bionic-x86_64.deb || sudo apt-get install -f
-
-      - name: Set up TeX Live
-        uses: xu-cheng/texlive-action@v1
-        with:
-          packages: >
-            latexmk
-            collection-fontsrecommended
-
       - name: Compile LaTeX document
-        run: latexmk -pdf main.tex
+        uses: xu-cheng/texlive-action@v3
+        with:
+          os: debian
+          run: |
+            # Install required LaTeX packages via tlmgr
+            tlmgr install latexmk collection-fontsrecommended
 
-      - name: Convert PDF to HTML
-        run: pdf2htmlEX --embed cfijo --dest-dir out main.pdf
+            # Compile LaTeX document
+            latexmk -pdf main.tex
 
+      - name: Convert PDF to HTML with Docker
+        run: |
+          # Create the output directory and give it correct permissions
+          mkdir -p out
+          chmod 777 out
+
+          # Run the pdf2htmlEX container to perform the conversion
+          docker run --rm -v $(pwd):/workdir pdf2htmlex/pdf2htmlex:latest \
+            pdf2htmlEX --dest-dir /workdir/out --embed cfijo /workdir/main.pdf
+      
       - name: Rename HTML file
         run: mv out/main.html out/index.html
 
@@ -67,7 +53,6 @@ jobs:
           publish_dir: out
           destination_dir: .
           force_orphan: true
-          cname: ''
 
       - name: Deploy to pdf branch
         uses: peaceiris/actions-gh-pages@v3
