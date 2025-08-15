@@ -1,7 +1,6 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amsfonts,amssymb,mathrsfs}
-\usepackage{theorem}
 \usepackage{hyperref}
 \usepackage{tikz}
 \usepackage{tikz-cd}
@@ -28,7 +27,7 @@
 \newcommand{\al}{{\alpha}}
 \newcommand{\la}{{\lambda}}
 
-% MATH-F R A K   GUYS:
+% MATH-F R A K   GUYS:
 
 \newcommand{\mG}{{\mathfrak{G}}}
 \newcommand{\mH}{{\mathfrak{H}}}
@@ -122,6 +121,8 @@
 \newcommand{\D}{{\Delta}}
 \newcommand{\ze}{{\zeta}}
 
+% Set up theorem styles
+\theoremstyle{plain}
 \newtheorem{thm}{Theorem}[section]
 \newtheorem{defi}[thm]{Definition}
 \newtheorem{defp}[thm]{Proposition-Definition}
@@ -134,7 +135,7 @@
 \newtheorem{example}[thm]{Example}
 \newtheorem{pty}[thm]{Property}
 
-\theorembodyfont{\rm}
+\theoremstyle{remark}
 \newtheorem{remark}[thm]{Remark}
 \newtheorem{exer}[thm]{Exercise}
 \newtheorem{prob}[thm]{Problem}
