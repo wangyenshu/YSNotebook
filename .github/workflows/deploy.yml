@@ -1,0 +1,82 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Python script to generate main.tex
+        run: python genMain.py
+
+      - name: Compile LaTeX document
+        uses: xu-cheng/texlive-action@v3
+        with:
+          os: debian
+          run: |
+            # Install required LaTeX packages
+            tlmgr install latexmk collection-fontsrecommended \
+              amsmath geometry hyperref xcolor graphics fancyhdr \
+              titlesec booktabs siunitx
+            # Compile LaTeX document
+            latexmk -pdf main.tex
+
+      - name: Check if PDF was created
+        run: |
+          ls -l
+          if [ ! -f main.pdf ]; then
+            echo "❌ main.pdf not found after LaTeX compile"
+            exit 1
+          fi
+
+      - name: Prepare output directory
+        run: |
+          mkdir -p out
+          cp main.pdf out/main.pdf
+
+      - name: Convert PDF to HTML with Docker
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/out:/out" \
+            -w /out \
+            pdf2htmlex/pdf2htmlex:0.18.8.rc2-master-20200820-alpine-3.12.0-x86_64 \
+            --dest-dir /out --embed cfijo main.pdf
+
+      - name: Rename HTML file
+        run: mv out/main.html out/index.html
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: out
+          destination_dir: .
+          force_orphan: true
+
+      - name: Deploy to pdf branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          destination_dir: .
+          keep_files: false
+          force_orphan: true
+          commit_message: 'Deploy main.pdf'
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          publish_branch: pdf
+          exclude_assets: out/
